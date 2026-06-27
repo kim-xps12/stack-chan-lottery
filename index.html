@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StackChanLoterry</title>
+<link rel="icon" type="image/png" href="pic/image.png">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+  background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+  color: #fff;
+  height: 100vh;
+  overflow: hidden;
+  user-select: none;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* === Header === */
+.app-header {
+  text-align: center;
+  padding: 1.2vh 3vw 0;
+  flex-shrink: 0;
+}
+
+.app-title {
+  font-size: clamp(1.6rem, 3.2vw, 2.8rem);
+  font-weight: 900;
+  background: linear-gradient(90deg, #ffd700 0%, #fff 40%, #ffd700 60%, #fff 80%, #ffd700 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: 0.2em;
+  animation: title-shimmer 3s linear infinite;
+}
+
+@keyframes title-shimmer {
+  to { background-position: 200% center; }
+}
+
+.app-subtitle {
+  display: inline-block;
+  margin-top: 0.35vh;
+  padding: 0.25em 0.9em;
+  font-size: clamp(0.9rem, 1.35vw, 1.25rem);
+  color: #fff;
+  letter-spacing: 0.08em;
+  font-weight: 800;
+  line-height: 1.25;
+  background: linear-gradient(90deg, rgba(230, 0, 18, 0.92), rgba(255, 96, 52, 0.92));
+  border: 1px solid rgba(255,255,255,0.45);
+  border-radius: 8px;
+  box-shadow: 0 0 18px rgba(230, 0, 18, 0.45), 0 4px 14px rgba(0,0,0,0.25);
+  text-shadow: 0 1px 3px rgba(0,0,0,0.45);
+}
+
+/* === Prize Section (top ~55%) === */
+.prize-section {
+  flex: 6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3vw;
+  padding: 1vh 3vw;
+  position: relative;
+  min-height: 0;
+}
+
+.prize-image-container {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.prize-image {
+  max-height: 90%;
+  max-width: 45vw;
+  object-fit: contain;
+  border-radius: 16px;
+  filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.3));
+  transition: opacity 0.5s;
+}
+
+.prize-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5vh;
+}
+
+.prize-label {
+  font-size: clamp(1rem, 1.8vw, 1.5rem);
+  color: rgba(255,255,255,0.5);
+  font-weight: 700;
+}
+
+.prize-name {
+  font-size: clamp(1.8rem, 4vw, 3.5rem);
+  font-weight: 900;
+  background: linear-gradient(90deg, #ffd700, #ffaa00, #ffd700);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.prize-winners-info {
+  font-size: clamp(1rem, 1.6vw, 1.3rem);
+  color: rgba(255,255,255,0.5);
+}
+
+.next-prize-btn {
+  padding: 1vh 2.5vw;
+  font-size: clamp(1rem, 1.6vw, 1.3rem);
+  font-weight: 700;
+  color: #ffd700;
+  background: rgba(255, 215, 0, 0.1);
+  border: 2px solid rgba(255, 215, 0, 0.4);
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: none;
+}
+
+.next-prize-btn.visible {
+  display: inline-block;
+}
+
+.next-prize-btn:hover {
+  background: rgba(255, 215, 0, 0.2);
+  border-color: #ffd700;
+  transform: translateY(-2px);
+}
+
+.next-prize-btn.last-prize {
+  color: #ff6b6b;
+  border-color: rgba(255, 107, 107, 0.4);
+  background: rgba(255, 107, 107, 0.1);
+}
+
+.next-prize-btn.last-prize:hover {
+  background: rgba(255, 107, 107, 0.2);
+  border-color: #ff6b6b;
+}
+
+/* Prize section blackout */
+.prize-section.blackout .prize-image-container,
+.prize-section.blackout .prize-info {
+  opacity: 0;
+  transition: opacity 0.6s ease-out;
+}
+
+.prize-section .prize-image-container,
+.prize-section .prize-info {
+  transition: opacity 0.5s ease-in;
+}
+
+/* Prize transition overlay */
+.prize-transition {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(15, 12, 41, 0.95);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 1.2s ease-in;
+}
+
+.prize-transition.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.prize-transition.fade-out {
+  transition: opacity 0.3s ease-out;
+  opacity: 0;
+}
+
+.prize-transition-text {
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  font-weight: 900;
+  color: #ffd700;
+  margin-bottom: 3vh;
+  text-align: center;
+}
+
+.prize-transition-img {
+  max-height: 40vh;
+  max-width: 60vw;
+  object-fit: contain;
+  border-radius: 16px;
+  filter: drop-shadow(0 0 40px rgba(255, 215, 0, 0.4));
+}
+
+.prize-transition-name {
+  font-size: clamp(1.5rem, 3vw, 2.5rem);
+  font-weight: 900;
+  color: #fff;
+  margin-top: 2vh;
+}
+
+/* All done overlay */
+.all-done-section {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2vh;
+}
+
+.all-done-section.active {
+  display: flex;
+}
+
+.all-done-text {
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 900;
+  color: #ffd700;
+}
+
+/* === Bottom Section (bottom ~40%) === */
+.bottom-section {
+  flex: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2vw;
+  padding: 0 3vw 1vh;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  min-height: 0;
+}
+
+.character-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 0 0 auto;
+  width: 15vw;
+  gap: 0.5vh;
+}
+
+.character-img {
+  width: min(10vw, 120px);
+  height: auto;
+  filter: drop-shadow(0 0 15px rgba(100, 200, 255, 0.4));
+  transition: transform 0.3s;
+}
+
+.character-img.excited {
+  animation: bounce 0.5s ease infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-8px) rotate(2deg); }
+}
+
+.speech-bubble {
+  position: relative;
+  background: #fff;
+  color: #333;
+  border-radius: 16px;
+  padding: 0.8vh 1.2vw;
+  font-size: clamp(0.9rem, 1.5vw, 1.3rem);
+  font-weight: bold;
+  text-align: center;
+  width: 15vw;
+  box-shadow: 0 3px 15px rgba(0,0,0,0.3);
+  white-space: pre-line;
+}
+
+.speech-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 8px solid transparent;
+  border-top-color: #fff;
+}
+
+/* === Roulette === */
+.roulette-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 1.5vh;
+}
+
+.roulette-container {
+  display: flex;
+  gap: 1vw;
+  align-items: center;
+}
+
+.roulette-label {
+  font-size: clamp(0.55rem, 0.9vw, 0.75rem);
+  color: rgba(255,255,255,0.5);
+  text-align: center;
+  margin-top: 0.3vh;
+}
+
+.roulette-slot {
+  position: relative;
+  width: clamp(55px, 8vw, 110px);
+  height: clamp(70px, 10vw, 140px);
+  overflow: hidden;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #1a1a2e, #16213e, #1a1a2e);
+  border: 2px solid rgba(255, 215, 0, 0.6);
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.2), inset 0 0 20px rgba(0,0,0,0.5);
+}
+
+.roulette-slot::before,
+.roulette-slot::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  height: 30%;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.roulette-slot::before {
+  top: 0;
+  background: linear-gradient(to bottom, rgba(26,26,46,0.95), transparent);
+}
+
+.roulette-slot::after {
+  bottom: 0;
+  background: linear-gradient(to top, rgba(26,26,46,0.95), transparent);
+}
+
+.roulette-strip {
+  position: absolute;
+  width: 100%;
+  text-align: center;
+  transition: none;
+}
+
+.roulette-strip .digit {
+  height: clamp(70px, 10vw, 140px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(2rem, 5.5vw, 5rem);
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+}
+
+.roulette-slot.stopped .roulette-strip .digit.active {
+  color: #ffd700;
+  text-shadow: 0 0 25px rgba(255, 215, 0, 0.8);
+}
+
+.draw-btn {
+  padding: 1.2vh 3vw;
+  font-size: clamp(1.2rem, 2.2vw, 1.8rem);
+  font-weight: 900;
+  color: #fff;
+  background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  box-shadow: 0 4px 25px rgba(238, 90, 36, 0.5);
+  transition: all 0.2s;
+  letter-spacing: 0.2em;
+}
+
+.draw-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 35px rgba(238, 90, 36, 0.7);
+}
+
+.draw-btn:active:not(:disabled) { transform: translateY(0); }
+
+.draw-btn:disabled {
+  background: linear-gradient(135deg, #555, #444);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.btn-group {
+  display: flex;
+  gap: 1vw;
+  align-items: center;
+}
+
+.redo-btn {
+  padding: 1.2vh 2vw;
+  font-size: clamp(0.9rem, 1.5vw, 1.2rem);
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #6c7278, #555);
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  box-shadow: 0 3px 15px rgba(0,0,0,0.3);
+  transition: all 0.2s;
+  display: none;
+}
+
+.redo-btn.visible {
+  display: inline-block;
+}
+
+.redo-btn:hover {
+  background: linear-gradient(135deg, #888, #666);
+  transform: translateY(-2px);
+}
+
+/* === History === */
+.history-section {
+  display: flex;
+  align-items: flex-start;
+  align-content: flex-start;
+  gap: 1.5vw;
+  flex: 1 1 0;
+  min-width: 0;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+.history-title {
+  font-size: clamp(1.8rem, 2.7vw, 2.4rem);
+  color: rgba(255,255,255,0.4);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.history-numbers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4vw;
+  overflow-y: auto;
+  max-height: 100%;
+}
+
+.history-num {
+  background: rgba(255,255,255,0.1);
+  padding: 0.4vh 0.8vw;
+  border-radius: 8px;
+  font-size: clamp(2.1rem, 3vw, 2.7rem);
+  color: rgba(255,255,255,0.7);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.history-num:first-child {
+  background: rgba(255, 215, 0, 0.2);
+  color: #ffd700;
+}
+
+/* === Footer === */
+.app-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5vh 3vw 1vh;
+  flex-shrink: 0;
+}
+
+.remaining-count {
+  font-size: clamp(0.6rem, 0.9vw, 0.8rem);
+  color: rgba(255,255,255,0.3);
+}
+
+.reset-btn {
+  padding: 0.3vh 1vw;
+  font-size: clamp(0.6rem, 0.9vw, 0.75rem);
+  color: rgba(255,255,255,0.4);
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.reset-btn:hover {
+  color: #ff6b6b;
+  border-color: rgba(255, 107, 107, 0.4);
+  background: rgba(255, 107, 107, 0.1);
+}
+
+/* === Effects === */
+.confetti-container {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.confetti {
+  position: absolute;
+  width: 10px; height: 10px;
+  opacity: 0;
+}
+
+@keyframes confetti-fall {
+  0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+}
+
+.result-flash {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: radial-gradient(circle, rgba(255,215,0,0.3), transparent 70%);
+  pointer-events: none;
+  z-index: 99;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.result-flash.active {
+  opacity: 1;
+  animation: flash-pulse 0.6s ease-out;
+}
+
+@keyframes flash-pulse {
+  0% { opacity: 0.8; }
+  100% { opacity: 0; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="app-header">
+    <h1 class="app-title">ｽﾀｯｸﾁｬﾝ誕生会2026抽選会！！</h1>
+    <p class="app-subtitle">Powered by M5Stack社</p>
+  </div>
+
+  <!-- Prize Display (top ~60%) -->
+  <div class="prize-section" id="prizeSection">
+    <div class="prize-image-container">
+      <img src="" alt="" class="prize-image" id="prizeImage">
+    </div>
+    <div class="prize-info">
+      <div class="prize-label" id="prizeLabel"></div>
+      <div class="prize-name" id="prizeName"></div>
+      <div class="prize-winners-info" id="prizeWinnersInfo"></div>
+      <button class="next-prize-btn" id="nextPrizeBtn" onclick="advancePrize()">次の景品へ ▶</button>
+    </div>
+    <div class="all-done-section" id="allDoneSection">
+      <div class="all-done-text">🎊 全景品の抽選が終了しました！ 🎊</div>
+    </div>
+  </div>
+
+  <!-- Bottom Section (~40%) -->
+  <div class="bottom-section">
+    <div class="character-section">
+      <div class="speech-bubble" id="speechBubble">ボタンを押してね！</div>
+      <img src="pic/image.png" alt="stackchan" class="character-img" id="characterImg">
+    </div>
+
+    <div class="roulette-section">
+      <div class="roulette-container">
+        <div>
+          <div class="roulette-slot" id="slot0">
+            <div class="roulette-strip" id="strip0"></div>
+          </div>
+          <div class="roulette-label">100の位</div>
+        </div>
+        <div>
+          <div class="roulette-slot" id="slot1">
+            <div class="roulette-strip" id="strip1"></div>
+          </div>
+          <div class="roulette-label">10の位</div>
+        </div>
+        <div>
+          <div class="roulette-slot" id="slot2">
+            <div class="roulette-strip" id="strip2"></div>
+          </div>
+          <div class="roulette-label">1の位</div>
+        </div>
+      </div>
+
+      <div class="btn-group">
+        <button class="draw-btn" id="drawBtn" onclick="startDraw()">抽 選 ！</button>
+        <button class="redo-btn" id="redoBtn" onclick="redoLastDraw()">やり直し</button>
+      </div>
+    </div>
+
+    <div class="history-section">
+      <div class="history-title">当選番号</div>
+      <div class="history-numbers" id="historyNumbers"></div>
+    </div>
+  </div>
+
+  <div class="app-footer">
+    <div class="remaining-count" id="remainingCount">残り: - / -</div>
+    <button class="reset-btn" onclick="resetAll()">リセット</button>
+  </div>
+</div>
+
+<!-- Prize transition overlay -->
+<div class="prize-transition" id="prizeTransition">
+  <div class="prize-transition-text" id="prizeTransitionText"></div>
+  <img src="" alt="" class="prize-transition-img" id="prizeTransitionImg">
+  <div class="prize-transition-name" id="prizeTransitionName"></div>
+</div>
+
+<div class="confetti-container" id="confettiContainer"></div>
+<div class="result-flash" id="resultFlash"></div>
+
+<script>
+const MIN_NUM = 0;
+const MAX_NUM = 109;
+const TOTAL = MAX_NUM - MIN_NUM + 1;
+let digitHeightCache = null;
+
+const PRIZES = [
+  { id: 'atomS3R',         name: 'ATOM S3R',              image: 'pic/prize/1.AtomS3R.png',            count: 5 },
+  { id: 'stopWatch',       name: 'Core StopWatch',        image: 'pic/prize/2.StopWatch.png',          count: 2 },
+  { id: 'stackChanSpecial', name: 'ｽﾀｯｸﾁｬﾝ 誕生会特別ｴﾃﾞｨｼｮﾝ', image: 'pic/prize/3.StackChanSpecial.png', count: 1 },
+];
+
+let drawnNumbers = [];
+let availableNumbers = new Set();
+let currentPrizeIdx = 0;
+let isSpinning = false;
+let audioCtx = null;
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem('lottery-state');
+    if (saved) {
+      const state = JSON.parse(saved);
+      drawnNumbers = state.drawn || [];
+      currentPrizeIdx = state.currentPrize ?? 0;
+      availableNumbers = new Set();
+      for (let i = MIN_NUM; i <= MAX_NUM; i++) {
+        if (!drawnNumbers.includes(i)) availableNumbers.add(i);
+      }
+      return true;
+    }
+  } catch (e) {}
+  for (let i = MIN_NUM; i <= MAX_NUM; i++) availableNumbers.add(i);
+  currentPrizeIdx = 0;
+  return false;
+}
+
+function saveState() {
+  try {
+    localStorage.setItem('lottery-state', JSON.stringify({
+      drawn: drawnNumbers,
+      currentPrize: currentPrizeIdx,
+    }));
+  } catch (e) {}
+}
+
+function resetAll() {
+  if (!confirm('抽選結果をすべてリセットしますか？')) return;
+  drawnNumbers = [];
+  availableNumbers = new Set();
+  currentPrizeIdx = 0;
+  for (let i = MIN_NUM; i <= MAX_NUM; i++) availableNumbers.add(i);
+  saveState();
+  updateHistory();
+  updatePrizeDisplay();
+  setSpeech('ボタンを押してね！');
+  setRedoVisible(false);
+  setNextPrizeBtnVisible(false);
+  for (let s = 0; s < 3; s++) {
+    document.getElementById(`strip${s}`).style.transform = 'translateY(0)';
+    document.getElementById(`slot${s}`).classList.remove('stopped');
+  }
+  document.querySelectorAll('.digit.active').forEach(d => d.classList.remove('active'));
+  document.getElementById('drawBtn').disabled = false;
+}
+
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function initStrips() {
+  for (let s = 0; s < 3; s++) {
+    const strip = document.getElementById(`strip${s}`);
+    strip.innerHTML = '';
+    for (let rep = 0; rep < 30; rep++) {
+      for (let d = 0; d <= 9; d++) {
+        const div = document.createElement('div');
+        div.className = 'digit';
+        div.textContent = d;
+        strip.appendChild(div);
+      }
+    }
+  }
+}
+
+function getDigitHeight() {
+  if (!digitHeightCache) {
+    const digit = document.querySelector('.roulette-strip .digit');
+    digitHeightCache = digit.getBoundingClientRect().height;
+  }
+  return digitHeightCache;
+}
+
+function drawNumber() {
+  if (availableNumbers.size === 0) return null;
+  const arr = Array.from(availableNumbers);
+  const idx = Math.floor(Math.random() * arr.length);
+  const num = arr[idx];
+  availableNumbers.delete(num);
+  drawnNumbers.unshift(num);
+  return num;
+}
+
+function getDigits(num) {
+  const hundreds = Math.floor(num / 100);
+  const tens = Math.floor((num % 100) / 10);
+  const ones = num % 10;
+  return [hundreds, tens, ones];
+}
+
+function playTick(pitch) {
+  const ctx = getAudioCtx();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.type = 'square';
+  osc.frequency.value = 800 + pitch * 200;
+  gain.gain.value = 0.04;
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
+  osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.05);
+}
+
+function playStop() {
+  const ctx = getAudioCtx();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.type = 'sine';
+  osc.frequency.value = 600;
+  osc.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.15);
+  gain.gain.value = 0.15;
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+  osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.2);
+}
+
+function playFanfare() {
+  const ctx = getAudioCtx();
+  const notes = [523, 659, 784, 1047];
+  notes.forEach((freq, i) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = 'triangle';
+    osc.frequency.value = freq;
+    gain.gain.value = 0;
+    gain.gain.linearRampToValueAtTime(0.12, ctx.currentTime + i * 0.12 + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.12 + 0.4);
+    osc.start(ctx.currentTime + i * 0.12); osc.stop(ctx.currentTime + i * 0.12 + 0.4);
+  });
+}
+
+function playDrumroll() {
+  const ctx = getAudioCtx();
+  for (let i = 0; i < 40; i++) {
+    const time = ctx.currentTime + i * 0.04;
+    const noise = ctx.createBufferSource();
+    const buffer = ctx.createBuffer(1, ctx.sampleRate * 0.03, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let j = 0; j < data.length; j++) data[j] = (Math.random() * 2 - 1) * 0.3;
+    noise.buffer = buffer;
+    const gain = ctx.createGain();
+    noise.connect(gain); gain.connect(ctx.destination);
+    gain.gain.value = 0.06;
+    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.03);
+    noise.start(time); noise.stop(time + 0.03);
+  }
+}
+
+function animateSlot(slotIndex, targetDigit, duration, delay) {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      const strip = document.getElementById(`strip${slotIndex}`);
+      const slot = document.getElementById(`slot${slotIndex}`);
+      const dh = getDigitHeight();
+      const totalDigits = 300;
+      const fullRotations = 15 + slotIndex * 5;
+      const targetPosition = fullRotations * 10 + targetDigit;
+      const targetY = -(targetPosition * dh);
+      let currentY = 0;
+      const startTime = performance.now();
+      let lastTickY = 0;
+
+      function animate(now) {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 4);
+        currentY = targetY * eased;
+        strip.style.transform = `translateY(${currentY}px)`;
+        if (Math.abs(currentY - lastTickY) > dh * 0.8) {
+          playTick(slotIndex);
+          lastTickY = currentY;
+        }
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          strip.style.transform = `translateY(${targetY}px)`;
+          slot.classList.add('stopped');
+          const digits = strip.querySelectorAll('.digit');
+          const activeIdx = targetPosition % totalDigits;
+          if (digits[activeIdx]) digits[activeIdx].classList.add('active');
+          playStop();
+          resolve();
+        }
+      }
+      requestAnimationFrame(animate);
+    }, delay);
+  });
+}
+
+function spawnConfetti() {
+  const container = document.getElementById('confettiContainer');
+  const colors = ['#ffd700', '#ff6b6b', '#48dbfb', '#ff9ff3', '#54a0ff', '#5f27cd', '#01a3a4', '#f368e0'];
+  for (let i = 0; i < 60; i++) {
+    const conf = document.createElement('div');
+    conf.className = 'confetti';
+    conf.style.left = Math.random() * 100 + 'vw';
+    conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+    conf.style.width = (Math.random() * 8 + 6) + 'px';
+    conf.style.height = (Math.random() * 8 + 6) + 'px';
+    conf.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    conf.style.animation = `confetti-fall ${Math.random() * 2 + 2}s ease-out ${Math.random() * 0.5}s forwards`;
+    container.appendChild(conf);
+  }
+  setTimeout(() => { container.innerHTML = ''; }, 4000);
+}
+
+function showFlash() {
+  const flash = document.getElementById('resultFlash');
+  flash.classList.remove('active');
+  void flash.offsetWidth;
+  flash.classList.add('active');
+  setTimeout(() => flash.classList.remove('active'), 600);
+}
+
+function updatePrizeDisplay() {
+  const imgEl = document.getElementById('prizeImage');
+  const labelEl = document.getElementById('prizeLabel');
+  const nameEl = document.getElementById('prizeName');
+  const infoEl = document.getElementById('prizeWinnersInfo');
+  const allDone = document.getElementById('allDoneSection');
+
+  if (currentPrizeIdx >= PRIZES.length) {
+    imgEl.style.display = 'none';
+    document.querySelector('.prize-info').style.display = 'none';
+    allDone.classList.add('active');
+    return;
+  }
+
+  allDone.classList.remove('active');
+  imgEl.style.display = '';
+  document.querySelector('.prize-info').style.display = '';
+
+  const prize = PRIZES[currentPrizeIdx];
+  imgEl.src = prize.image;
+  imgEl.alt = prize.name;
+  labelEl.textContent = `景品 ${currentPrizeIdx + 1} / ${PRIZES.length}`;
+  nameEl.textContent = prize.name;
+  infoEl.textContent = `当選枠: ${prize.count} 名`;
+}
+
+function showPrizeTransition(prizeIndex) {
+  return new Promise(resolve => {
+    const prize = PRIZES[prizeIndex];
+    const section = document.getElementById('prizeSection');
+    const overlay = document.getElementById('prizeTransition');
+
+    document.getElementById('prizeTransitionText').textContent = '🎁 次の景品はこちら！';
+    document.getElementById('prizeTransitionImg').src = prize.image;
+    document.getElementById('prizeTransitionName').textContent = prize.name;
+
+    section.classList.add('blackout');
+
+    setTimeout(() => {
+      overlay.classList.remove('fade-out');
+      overlay.classList.add('active');
+
+      setTimeout(() => {
+        updatePrizeDisplay();
+
+        overlay.classList.add('fade-out');
+
+        setTimeout(() => {
+          overlay.classList.remove('active', 'fade-out');
+          section.classList.remove('blackout');
+          resolve();
+        }, 350);
+      }, 3000);
+    }, 700);
+  });
+}
+
+function setNextPrizeBtnVisible(visible) {
+  const btn = document.getElementById('nextPrizeBtn');
+  btn.classList.toggle('visible', visible);
+  if (visible && currentPrizeIdx >= PRIZES.length - 1) {
+    btn.textContent = '抽選を終了する';
+    btn.classList.add('last-prize');
+  } else {
+    btn.textContent = '次の景品へ ▶';
+    btn.classList.remove('last-prize');
+  }
+}
+
+async function advancePrize() {
+  if (isSpinning) return;
+  setNextPrizeBtnVisible(false);
+  setRedoVisible(false);
+
+  const nextIdx = currentPrizeIdx + 1;
+  if (nextIdx < PRIZES.length) {
+    currentPrizeIdx = nextIdx;
+    saveState();
+    await showPrizeTransition(nextIdx);
+    setSpeech('ボタンを押してね！');
+  } else {
+    currentPrizeIdx = PRIZES.length;
+    saveState();
+    updatePrizeDisplay();
+    setSpeech('全景品の抽選が\n終了しました！🎊');
+  }
+}
+
+function updateHistory() {
+  const container = document.getElementById('historyNumbers');
+  container.innerHTML = '';
+  drawnNumbers.forEach(num => {
+    const span = document.createElement('span');
+    span.className = 'history-num';
+    span.textContent = num;
+    container.appendChild(span);
+  });
+  document.getElementById('remainingCount').textContent =
+    `残り: ${availableNumbers.size} / ${TOTAL}`;
+}
+
+function setSpeech(text) {
+  document.getElementById('speechBubble').textContent = text;
+}
+
+function setRedoVisible(visible) {
+  document.getElementById('redoBtn').classList.toggle('visible', visible);
+}
+
+function redoLastDraw() {
+  if (isSpinning || drawnNumbers.length === 0) return;
+
+  const num = drawnNumbers.shift();
+  availableNumbers.add(num);
+
+  saveState();
+  updateHistory();
+  setRedoVisible(false);
+  setSpeech('やり直しだよ！\nもう一回引いてね');
+
+  for (let s = 0; s < 3; s++) {
+    document.getElementById(`strip${s}`).style.transform = 'translateY(0)';
+    document.getElementById(`slot${s}`).classList.remove('stopped');
+  }
+  document.querySelectorAll('.digit.active').forEach(d => d.classList.remove('active'));
+}
+
+async function startDraw() {
+  if (isSpinning) return;
+
+  if (currentPrizeIdx >= PRIZES.length) {
+    setSpeech('全部終わったよ！');
+    return;
+  }
+
+  if (availableNumbers.size === 0) {
+    setSpeech('全部出ちゃった！');
+    return;
+  }
+
+  isSpinning = true;
+  setRedoVisible(false);
+  setNextPrizeBtnVisible(false);
+  const btn = document.getElementById('drawBtn');
+  btn.disabled = true;
+  const img = document.getElementById('characterImg');
+
+  document.querySelectorAll('.roulette-slot').forEach(s => s.classList.remove('stopped'));
+  document.querySelectorAll('.digit.active').forEach(d => d.classList.remove('active'));
+  for (let s = 0; s < 3; s++) {
+    document.getElementById(`strip${s}`).style.transform = 'translateY(0)';
+  }
+
+  const num = drawNumber();
+  const [h, t, o] = getDigits(num);
+
+  setSpeech('次の番号は…');
+  img.classList.add('excited');
+  playDrumroll();
+
+  await animateSlot(0, h, 2000, 200);
+  await animateSlot(1, t, 2000, 300);
+  await animateSlot(2, o, 2000, 300);
+
+  const prize = PRIZES[currentPrizeIdx];
+  const messages = [
+    `${num}番！\n${prize.name} 当選！🎉`,
+    `${num}番！\nおめでとう！🎊`,
+    `${num}番！\nやったね！✨`,
+    `${num}番\nきたーー！🎉`,
+  ];
+  setSpeech(messages[Math.floor(Math.random() * messages.length)]);
+  img.classList.remove('excited');
+
+  playFanfare();
+  spawnConfetti();
+  showFlash();
+  saveState();
+  updateHistory();
+
+  isSpinning = false;
+  btn.disabled = false;
+  setRedoVisible(true);
+  setNextPrizeBtnVisible(true);
+}
+
+loadState();
+initStrips();
+updateHistory();
+updatePrizeDisplay();
+if (drawnNumbers.length > 0 && currentPrizeIdx < PRIZES.length) {
+  setSpeech(`${drawnNumbers.length}個の番号が\n抽選済みです`);
+  setNextPrizeBtnVisible(true);
+} else if (currentPrizeIdx >= PRIZES.length) {
+  setSpeech('全景品の抽選が\n終了しました！🎊');
+}
+</script>
+</body>
+</html>

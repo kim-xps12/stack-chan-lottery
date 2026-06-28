@@ -14,3 +14,6 @@ SPAとして動作する抽選器Web Appです．
 - pic/prize/1.AtomS3R.png: https://docs.m5stack.com/ja/core/AtomS3R
 - pic/prize/2.StopWatch.png: https://docs.m5stack.com/ja/core/StopWatch
 - pic/prize/3.StackChanSpecial.png: https://docs.m5stack.com/ja/StackChan (イベントの都合上，左上に飾りを追加で描いています．)
+
+## ライセンス
+抽選器本体のソースコード一式はMITライセンスです．ただし，`pic/`以下にある上記の引用画像はその限りではありません．
